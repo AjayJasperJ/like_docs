@@ -16,11 +16,27 @@ class _TodoListScreenState extends State<TodoListScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch data after the initial build frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        context.read<TodoProvider>().getTodoList();
-      }
+    // Fetch data after the initial build frame.
+    // likeWhenNotifier is the "empty" handler — pure state mapping, no auto-toasts.
+    // Use it when you want full manual control over side-effects.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final response = await context.read<TodoProvider>().getTodoList();
+      await likeWhenNotifier<List<TodoModel>>(
+        response: response,
+        // Called when the first successful data lands (fresh or SWR).
+        onSuccess: (todos) async {
+          debugPrint('[likeWhenNotifier] Loaded ${todos.length} todos.');
+        },
+        // Called on a typed API error (e.g., 4xx / 5xx).
+        onError: (error) async {
+          debugPrint('[likeWhenNotifier] Error: ${error.message}');
+        },
+        // Called on an unexpected exception (e.g., no internet, parse failure).
+        onException: (message) async {
+          debugPrint('[likeWhenNotifier] Exception: $message');
+        },
+      );
     });
   }
 
@@ -52,12 +68,32 @@ class _TodoListScreenState extends State<TodoListScreen> {
                 final response = await todoProvider.addTodo(title);
 
                 if (context.mounted) {
+                  // updateNotifier is the "full" handler — built-in toasts, haptics,
+                  // and per-state callbacks all handled automatically.
+                  //
+                  // Flags:
+                  //   disableSuccessToast  → show/hide auto-toast on success (default: disabled)
+                  //   disableErrorToast    → show/hide auto-toast on error   (default: disabled)
+                  //   disableExceptionToast→ show/hide auto-toast on exception (default: disabled)
+                  //   enableHaptics        → fires HapticFeedback on success/error/exception
+                  //   messageOverrides     → override the toast message per state
                   await updateNotifier<TodoModel>(
                     response: response,
                     context: context,
-                    disableSuccessToast: false, // Automatically show toast!
+                    disableSuccessToast: false, // auto-toast on success
+                    disableErrorToast: false,   // auto-toast on error
+                    enableHaptics: true,        // vibrate on feedback
                     messageOverrides: {
                       LikeState.success: 'Task "$title" created successfully!',
+                      LikeState.error: 'Failed to create "$title". Try again.',
+                    },
+                    onSuccess: (todo) async {
+                      // Optional: additional logic after success (e.g. navigation, analytics).
+                      debugPrint('[updateNotifier] Created todo #${todo.id}');
+                    },
+                    onError: (error) async {
+                      // Optional: handle typed error (e.g., show a dialog).
+                      debugPrint('[updateNotifier] Error: ${error.message}');
                     },
                   );
                 }

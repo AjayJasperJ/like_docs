@@ -3,6 +3,7 @@ import 'package:like/like.dart';
 import '../models/todo_model.dart';
 import '../models/user_model.dart';
 import '../repositories/todo_repository.dart';
+import '../services/toast_service.dart'; // registers AppToasts extension on LikeToast
 
 class TodoProvider with ChangeNotifier, LikeAutoReconnectMixin {
   final TodoRepository _todoRepository;
@@ -11,13 +12,34 @@ class TodoProvider with ChangeNotifier, LikeAutoReconnectMixin {
   // No initAutoReconnect() or manual lifecycle subscriptions needed.
   TodoProvider(this._todoRepository);
 
+  // =============================================================================
+  // Zero-Config Declarative Pipelines (Opt-In)
+  // =============================================================================
+  // Declaring a `mapper` on a LikeNotifierState opts that state into automatic
+  // pipeline synchronization. When `fetch` runs, the engine registers a path-aware
+  // pipeline listener — any subsequent network response matching the same endpoint
+  // (and query parameters) automatically updates the state without extra code.
+  //
+  // TO DISABLE pipeline sync for a specific state, simply omit the mapper:
+  //
+  //   final createTodoState = LikeNotifierState<TodoModel>(); // no pipeline binding
+  //
+  // This is the right choice for write-only or fire-and-forget states (POST/DELETE)
+  // where you never want remote pipeline updates applied to the local state.
+  // =============================================================================
+
   /// Managed state holding the dynamic UI data.
-  final todosState = LikeNotifierState<List<TodoModel>>();
+  final todosState = LikeNotifierState<List<TodoModel>>(
+    mapper: (json) => (json as List).map((e) => TodoModel.fromJson(e)).toList(),
+  );
 
   /// Managed state holding selected user details.
-  final userDetailState = LikeNotifierState<UserModel>();
+  final userDetailState = LikeNotifierState<UserModel>(
+    mapper: (json) => UserModel.fromJson(json),
+  );
 
   /// Managed state holding the creation status of a new Todo.
+  /// No pipeline binding will be created because there is no mapper.
   final createTodoState = LikeNotifierState<TodoModel>();
 
   /// Safe state getter consumed by the UI.
@@ -74,6 +96,12 @@ class TodoProvider with ChangeNotifier, LikeAutoReconnectMixin {
             newTodoList,
           );
           notifyListeners();
+
+          // LikeToast extension (defined in toast_service.dart) — call from anywhere!
+          LikeToast.saved('"$title" was created.');
+        } else {
+          // showResponseToast auto-derives success/warning/error from the response state.
+          LikeToastManager.showResponseToast(result.toStateResponse());
         }
         return result.toStateResponse();
       },

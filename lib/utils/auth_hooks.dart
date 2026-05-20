@@ -2,17 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:like/like.dart';
-import 'package:toastification/toastification.dart';
-import 'package:scola_connect/core/config/environment.dart';
-import 'package:scola_connect/core/constants/uri_manager.dart';
-import 'package:scola_connect/core/toasts/toast_manager.dart';
-import 'package:scola_connect/routes/app_routes.dart';
-import 'package:scola_connect/routes/route_services.dart';
-import 'package:scola_connect/storage/token_storage.dart';
-import 'package:scola_connect/storage/userdata_storage.dart';
 
-/// Centralized lifecycle and interception hooks for the application authentication module.
-/// Bridges the [LikeAuthInterceptor] engine with app storage, routing, and Toast layers.
+/// A template / reference implementation demonstrating how to wire up
+/// session management and token refresh rotation with the LIKE Auth engine.
+///
+/// Developers can copy and adapt this implementation to their custom storage
+/// and UI/toast libraries.
 class AuthHooks {
   /// Resolves the current JWT access token from storage.
   static Future<String?> getToken() async => await TokenStorage.getToken();
@@ -31,7 +26,7 @@ class AuthHooks {
       debugPrint("[AuthInterceptor] Initiating silent token refresh...");
       final dio = Dio(
         BaseOptions(
-          baseUrl: LikeHelpers.normalizeBaseUrl(Environment.apiUrl),
+          baseUrl: LikeHelpers.normalizeBaseUrl("https://api.example.com"),
           connectTimeout: Duration(seconds: LikeConstants.connectTimeout),
           receiveTimeout: Duration(seconds: LikeConstants.receiveTimeout),
           sendTimeout: Duration(seconds: LikeConstants.sendTimeout),
@@ -39,7 +34,7 @@ class AuthHooks {
       );
 
       final response = await dio.post(
-        UriManager.refreshToken,
+        "/auth/refresh",
         data: {'refresh_token': rToken},
         options: Options(
           headers: {
@@ -101,14 +96,23 @@ class AuthHooks {
     await TokenStorage.deleteToken();
     await UserdataStorage.deleteAllData();
 
-    // Redirect to login screen
-    RouteServices.removeUntil(AppRoutes.login, (route) => false);
-
-    // Show session expired notification to the user
-    ToastManager.showToast(
-      message: "Session Expired",
-      submessage: "Please log in again to continue.",
-      type: ToastificationType.warning,
-    );
+    // Redirect to login screen or show notification
+    debugPrint("[AuthInterceptor] Redirecting user to Login Screen.");
   }
+}
+
+// =============================================================================
+// Placeholder storage modules to keep the template self-contained and clean.
+// Replace these with your actual App Database / Flutter Secure Storage wrappers.
+// =============================================================================
+
+class TokenStorage {
+  static Future<String?> getToken() async => "mock_access_token";
+  static Future<String?> getRefreshToken() async => "mock_refresh_token";
+  static Future<void> saveToken(String access, String refresh) async {}
+  static Future<void> deleteToken() async {}
+}
+
+class UserdataStorage {
+  static Future<void> deleteAllData() async {}
 }
