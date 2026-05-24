@@ -40,6 +40,7 @@ class _LikeExampleAppState extends State<LikeExampleApp> {
         ChangeNotifierProvider(create: (_) => MealProvider(mealRepository)),
       ],
       child: MaterialApp(
+        navigatorKey: Like.navigatorKey,
         title: 'LIKE Recipe Discovery',
         debugShowCheckedModeBanner: false,
         theme: ThemeData(

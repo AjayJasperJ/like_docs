@@ -1,0 +1,5 @@
+dependency_overrides:
+  like:
+    path: ../like
+  like_devtool:
+    path: ../like_devtool
