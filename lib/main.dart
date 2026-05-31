@@ -5,6 +5,11 @@ import 'package:like_docs/like_app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await LikeService.init(config: LikeConfig());
+  await LikeService.init(
+    config: LikeConfig(
+      projectName: 'mealdb_test',
+      baseUrl: 'https://www.themealdb.com',
+    ),
+  );
   runApp(LikeApp(child: const LikeExampleApp()));
 }

@@ -11,7 +11,6 @@ class LikeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Like(
-      baseUrl: 'https://www.themealdb.com',
       devTool: (child) => LikeDevTool(child: child),
       getToken: AuthHooks.getToken,
       //if jwt based auth token provided by developer, it is stored and used
