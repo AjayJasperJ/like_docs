@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:like/like.dart';
-import 'package:like_devtool/like_devtool.dart';
+// import 'package:like_devtool/like_devtool.dart';
 import 'package:like_docs/ui/custom_toasts.dart';
 import 'package:like_docs/utils/auth_hooks.dart';
 
@@ -11,7 +11,7 @@ class LikeApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Like(
-      devTool: (child) => LikeDevTool(child: child),
+      // devTool: (child) => LikeDevTool(child: child),
       getToken: AuthHooks.getToken,
       //if jwt based auth token provided by developer, it is stored and used
       refreshToken: AuthHooks.refreshToken,
